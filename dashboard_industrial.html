@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuantumFinance — Dashboard de Monitoramento Industrial</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --ok:    #00cc66;
+  --warn:  #ffaa00;
+  --alert: #ff2244;
+  --blue:  #00aaff;
+  --bg:    #070d1a;
+  --bg2:   #0d1a2e;
+  --card:  rgba(255,255,255,.05);
+  --brd:   rgba(255,255,255,.08);
+  --sub:   #556080;
+}
+body {
+  font-family: 'Courier New', monospace;
+  background: var(--bg);
+  color: #c0d0e8;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* ── Header ── */
+header {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--brd);
+  padding: 14px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.logo {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2px;
+}
+.logo span { color: #00aaff; }
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: .8rem;
+  color: var(--sub);
+}
+#clock {
+  font-size: .95rem;
+  color: #c0d0e8;
+  font-family: 'Courier New', monospace;
+}
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+  display: inline-block;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .4; }
+}
+
+/* ── Layout ── */
+.dash {
+  display: grid;
+  grid-template-columns: 280px 1fr 320px;
+  grid-template-rows: auto auto;
+  gap: 14px;
+  padding: 16px 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: 10px;
+  padding: 16px;
+}
+.card-title {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--sub);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title::before {
+  content: '';
+  display: inline-block;
+  width: 3px; height: 12px;
+  background: var(--blue);
+  border-radius: 2px;
+}
+
+/* ── Status principal ── */
+#status-card {
+  grid-column: 1;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.status-badge {
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  border: 1px solid;
+  transition: all .4s;
+}
+.status-badge.ok    { background: rgba(0,204,102,.1); border-color: rgba(0,204,102,.3); }
+.status-badge.warn  { background: rgba(255,170,0,.1);  border-color: rgba(255,170,0,.3); }
+.status-badge.alert { background: rgba(255,34,68,.12); border-color: rgba(255,34,68,.4);
+  animation: blink-card .8s infinite; }
+@keyframes blink-card {
+  0%, 100% { border-color: rgba(255,34,68,.4); }
+  50% { border-color: rgba(255,34,68,.9); }
+}
+
+.status-icon { font-size: 2.5rem; margin-bottom: 8px; }
+.status-text { font-size: 1.2rem; font-weight: 700; letter-spacing: 2px; }
+.status-sub  { font-size: .78rem; color: var(--sub); margin-top: 4px; }
+
+/* ── Gauge temperatura ── */
+.gauge-wrap {
+  position: relative;
+  width: 100%; height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.gauge-bar-bg {
+  width: 90%;
+  height: 20px;
+  background: rgba(255,255,255,.08);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+.gauge-bar-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width .8s ease, background .4s;
+  background: linear-gradient(90deg, #00cc66, #ffaa00, #ff2244);
+  background-size: 300% 100%;
+}
+.gauge-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-top: 10px;
+}
+.gauge-label { font-size: .75rem; color: var(--sub); margin-top: 3px; }
+.gauge-limit { font-size: .72rem; color: var(--sub); }
+
+/* ── Pessoa timer ── */
+.timer-display {
+  text-align: center;
+  padding: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--brd);
+  background: rgba(255,255,255,.03);
+}
+.timer-num {
+  font-size: 2.8rem;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  line-height: 1;
+  transition: color .3s;
+}
+.timer-label { font-size: .72rem; color: var(--sub); margin-top: 4px; }
+.timer-bar-wrap {
+  margin-top: 10px;
+  height: 6px;
+  background: rgba(255,255,255,.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.timer-bar {
+  height: 100%;
+  background: var(--ok);
+  border-radius: 3px;
+  transition: width .8s, background .4s;
+}
+
+/* ── Centro: gráfico + área monitorada ── */
+.center-col {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Área industrial (visualização) */
+.industrial-area {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: 10px;
+  padding: 16px;
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+}
+.area-label {
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--sub);
+  margin-bottom: 12px;
+}
+.furnace-zone {
+  position: absolute;
+  width: 120px; height: 100px;
+  top: 40px; left: 50%;
+  transform: translateX(-50%);
+  border: 2px dashed rgba(255,170,0,.5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.furnace-icon { font-size: 2.5rem; }
+.furnace-label { font-size: .7rem; color: rgba(255,170,0,.8); text-align: center; }
+.person-icon {
+  position: absolute;
+  font-size: 2rem;
+  transition: all .5s;
+  opacity: 0;
+}
+.person-icon.visible { opacity: 1; }
+.person-icon.safe  { color: var(--ok);   top: 50px; left: 20%; }
+.person-icon.zone  { color: var(--warn); top: 50px; left: 50%; transform: translateX(-50%); }
+.person-icon.danger{ color: var(--alert);top: 50px; left: 50%; transform: translateX(-50%);
+  animation: shake .3s infinite; }
+@keyframes shake {
+  0%, 100% { transform: translateX(-50%) rotate(-5deg); }
+  50% { transform: translateX(-50%) rotate(5deg); }
+}
+.alert-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,34,68,.08);
+  border-radius: 10px;
+  opacity: 0;
+  transition: opacity .4s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--alert);
+  letter-spacing: 3px;
+}
+
+/* Chart */
+#temp-chart {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: 10px;
+  padding: 16px;
+  flex: 1;
+}
+canvas { width: 100% !important; }
+
+/* ── Direita: telemetria + alertas ── */
+.right-col {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Plantas */
+.plant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.plant-item {
+  background: rgba(255,255,255,.04);
+  border: 1px solid var(--brd);
+  border-radius: 7px;
+  padding: 9px;
+  font-size: .78rem;
+}
+.plant-item .pname { color: var(--blue); font-weight: 700; font-size: .72rem; }
+.plant-item .pstat { margin-top: 3px; }
+
+/* Alertas log */
+.alert-log {
+  flex: 1;
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+#alert-list {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 8px;
+}
+.alert-item {
+  background: rgba(255,34,68,.08);
+  border: 1px solid rgba(255,34,68,.2);
+  border-radius: 5px;
+  padding: 6px 9px;
+  font-size: .76rem;
+  display: flex;
+  gap: 8px;
+}
+.alert-item.warn {
+  background: rgba(255,170,0,.07);
+  border-color: rgba(255,170,0,.2);
+}
+.alert-time { color: var(--sub); flex-shrink: 0; }
+.alert-msg  { color: #c0d0e8; }
+
+/* MQTT feed */
+.mqtt-feed {
+  background: var(--card);
+  border: 1px solid var(--brd);
+  border-radius: 10px;
+  padding: 14px;
+}
+#mqtt-list {
+  max-height: 160px;
+  overflow-y: auto;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.mqtt-line {
+  font-size: .72rem;
+  padding: 3px 6px;
+  border-radius: 3px;
+  background: rgba(0,170,255,.05);
+  border: 1px solid rgba(0,170,255,.1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #80c0ff;
+}
+
+/* ── Controles de simulação ── */
+.controls {
+  grid-column: 1 / 4;
+  background: var(--bg2);
+  border: 1px solid var(--brd);
+  border-radius: 10px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ctrl-label { font-size: .72rem; color: var(--sub); text-transform: uppercase; letter-spacing: 1px; }
+.btn {
+  padding: 8px 18px;
+  border-radius: 6px;
+  border: 1px solid;
+  cursor: pointer;
+  font-size: .83rem;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  letter-spacing: 1px;
+  transition: all .2s;
+}
+.btn-ok   { background: rgba(0,204,102,.1); border-color: var(--ok); color: var(--ok); }
+.btn-warn { background: rgba(255,170,0,.1);  border-color: var(--warn); color: var(--warn); }
+.btn-alert{ background: rgba(255,34,68,.1); border-color: var(--alert); color: var(--alert); }
+.btn-blue { background: rgba(0,170,255,.1); border-color: var(--blue); color: var(--blue); }
+.btn:hover { opacity: .75; }
+.btn:active { transform: scale(.97); }
+
+.temp-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+.temp-ctrl label { font-size: .75rem; color: var(--sub); }
+input[type=range] {
+  width: 130px;
+  accent-color: var(--blue);
+}
+#temp-display { font-size: .9rem; font-weight: 700; min-width: 55px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">QUANTUM<span>FINANCE</span> · IoT Monitor</div>
+  <div class="header-right">
+    <span><span class="status-dot"></span> SISTEMA ATIVO</span>
+    <span>Planta: SP01 — São Paulo</span>
+    <span id="clock">00:00:00</span>
+  </div>
+</header>
+
+<div class="dash">
+
+  <!-- ── COLUNA ESQUERDA: Status + Temp + Timer ── -->
+  <div id="status-card">
+
+    <div class="card-title">Status da Área</div>
+
+    <div class="status-badge ok" id="status-badge">
+      <div class="status-icon" id="status-icon">✅</div>
+      <div class="status-text" id="status-text">SEGURO</div>
+      <div class="status-sub" id="status-sub">Nenhuma ocorrência</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Temperatura — FORNO_A</div>
+      <div class="gauge-wrap">
+        <div class="gauge-bar-bg">
+          <div class="gauge-bar-fill" id="temp-bar" style="width:35%;"></div>
+        </div>
+        <div class="gauge-value" id="temp-value">52.0°C</div>
+        <div class="gauge-label">Temperatura atual</div>
+        <div class="gauge-limit">Limite: 80°C</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Tempo na Zona de Risco</div>
+      <div class="timer-display">
+        <div class="timer-num" id="timer-num">00s</div>
+        <div class="timer-label">Limite: 10 segundos</div>
+        <div class="timer-bar-wrap">
+          <div class="timer-bar" id="timer-bar" style="width:0%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Contadores</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center;">
+        <div>
+          <div style="font-size:2rem;font-weight:700;color:var(--alert);" id="cnt-alertas">0</div>
+          <div style="font-size:.72rem;color:var(--sub);">ALERTAS</div>
+        </div>
+        <div>
+          <div style="font-size:2rem;font-weight:700;color:var(--blue);" id="cnt-tick">0</div>
+          <div style="font-size:.72rem;color:var(--sub);">CICLOS</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── COLUNA CENTRAL ── -->
+  <div class="center-col">
+
+    <div class="industrial-area">
+      <div class="area-label">📷 Câmera — Área Forno A · Visualização em Tempo Real</div>
+      <div class="furnace-zone">
+        <div class="furnace-icon">🔥</div>
+        <div class="furnace-label">FORNO A<br>ZONA RESTRITA</div>
+      </div>
+      <div class="person-icon safe" id="person-icon">🧑</div>
+      <div class="alert-overlay" id="alert-overlay"></div>
+    </div>
+
+    <div id="temp-chart">
+      <div class="card-title">Histórico de Temperatura (últimos 30s)</div>
+      <canvas id="chart" height="120"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Plantas Monitoradas — Visão Global</div>
+      <div class="plant-grid">
+        <div class="plant-item">
+          <div class="pname">SP01 · FORNO_A</div>
+          <div class="pstat" id="plant-sp01">🟢 Monitorando</div>
+        </div>
+        <div class="plant-item">
+          <div class="pname">RJ01 · REATOR_B</div>
+          <div class="pstat">🟢 Normal — 61°C</div>
+        </div>
+        <div class="plant-item">
+          <div class="pname">MX01 · FORNO_C</div>
+          <div class="pstat">🟢 Normal — 55°C</div>
+        </div>
+        <div class="plant-item">
+          <div class="pname">DE01 · PRESS_A</div>
+          <div class="pstat">🟢 Normal — 48°C</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── COLUNA DIREITA ── -->
+  <div class="right-col">
+
+    <div class="alert-log">
+      <div class="card-title">Log de Alertas</div>
+      <div id="alert-list">
+        <div class="alert-item warn">
+          <span class="alert-time">00:00</span>
+          <span class="alert-msg">Sistema iniciado — Monitoramento ativo</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mqtt-feed">
+      <div class="card-title">Feed MQTT — quantumfinance/sp01/forno_a</div>
+      <div id="mqtt-list"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Telemetria Atual (JSON)</div>
+      <pre id="json-display" style="font-size:.7rem;color:#80c0ff;line-height:1.6;overflow:auto;max-height:140px;"></pre>
+    </div>
+
+  </div>
+
+  <!-- ── CONTROLES DE SIMULAÇÃO ── -->
+  <div class="controls">
+    <div class="ctrl-label">Simular cenário:</div>
+    <button class="btn btn-ok"    onclick="simular('seguro')">✅ SISTEMA OK</button>
+    <button class="btn btn-warn"  onclick="simular('aviso')">⚠️ PESSOA DETECTADA</button>
+    <button class="btn btn-alert" onclick="simular('alerta_pessoa')">🚨 ALERTA PESSOA</button>
+    <button class="btn btn-alert" onclick="simular('alerta_temp')">🌡️ ALERTA TEMPERATURA</button>
+    <button class="btn btn-blue"  onclick="resetar()">🔄 RESET</button>
+
+    <div class="temp-ctrl">
+      <label>Temperatura manual:</label>
+      <input type="range" id="temp-slider" min="20" max="120" value="52"
+             oninput="ajustarTemp(this.value)">
+      <span id="temp-display">52°C</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── Estado ────────────────────────────────────────────────────────────
+let estado = 'seguro';
+let temp = 52.0;
+let pessoaSeg = 0;
+let alertasTotal = 0;
+let tick = 0;
+let tempHistory = Array(30).fill(52);
+let pessoaNaZona = false;
+let pessoaTimer = null;
+let startTime = Date.now();
+
+// ─── Clock ─────────────────────────────────────────────────────────────
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toTimeString().slice(0,8);
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ─── Simulações ────────────────────────────────────────────────────────
+function simular(cenario) {
+  if (cenario === 'seguro') {
+    estado = 'seguro'; pessoaNaZona = false; pessoaSeg = 0;
+    clearInterval(pessoaTimer); pessoaTimer = null;
+    if (temp >= 80) temp = 52;
+    logAlert('Sistema normalizado', 'ok');
+  }
+  else if (cenario === 'aviso') {
+    estado = 'aviso'; pessoaNaZona = true; pessoaSeg = 0;
+    logAlert('⚠️ Pessoa detectada na zona de risco — FORNO_A', 'warn');
+    pessoaTimer = setInterval(() => { pessoaSeg++; if(pessoaSeg>=10) simular('alerta_pessoa'); }, 1000);
+  }
+  else if (cenario === 'alerta_pessoa') {
+    estado = 'alerta_pessoa'; pessoaNaZona = true;
+    if (pessoaSeg < 10) pessoaSeg = 12;
+    alertasTotal++;
+    logAlert('🚨 ALERTA: Pessoa na zona por ' + pessoaSeg + 's — EVACUAÇÃO!', 'alert');
+    clearInterval(pessoaTimer);
+  }
+  else if (cenario === 'alerta_temp') {
+    temp = 95.0;
+    document.getElementById('temp-slider').value = 95;
+    document.getElementById('temp-display').textContent = '95°C';
+    estado = 'alerta_temp'; alertasTotal++;
+    logAlert('🌡️ ALERTA: Temperatura ' + temp + '°C acima do limite (80°C)!', 'alert');
+  }
+  atualizar();
+}
+
+function resetar() {
+  estado = 'seguro'; pessoaSeg = 0; pessoaNaZona = false;
+  alertasTotal = 0;
+  if (temp >= 80) temp = 52;
+  clearInterval(pessoaTimer); pessoaTimer = null;
+  logAlert('🔄 RESET: todos os alertas limpos', 'ok');
+  document.getElementById('alert-list').innerHTML =
+    '<div class="alert-item warn"><span class="alert-time">--:--</span><span class="alert-msg">Sistema reiniciado</span></div>';
+  atualizar();
+}
+
+function ajustarTemp(val) {
+  temp = parseFloat(val);
+  document.getElementById('temp-display').textContent = val + '°C';
+  if (temp >= 80 && estado !== 'alerta_pessoa') simular('alerta_temp');
+  else if (temp < 80 && estado === 'alerta_temp') simular('seguro');
+}
+
+// ─── Log ────────────────────────────────────────────────────────────────
+function logAlert(msg, tipo) {
+  const list = document.getElementById('alert-list');
+  const now = new Date();
+  const ts = now.toTimeString().slice(0,5);
+  const el = document.createElement('div');
+  el.className = 'alert-item' + (tipo==='ok'?' warn':tipo==='alert'?'':' warn');
+  el.innerHTML = `<span class="alert-time">${ts}</span><span class="alert-msg">${msg}</span>`;
+  list.insertBefore(el, list.firstChild);
+  if (list.children.length > 20) list.removeChild(list.lastChild);
+}
+
+// ─── Atualizar UI ───────────────────────────────────────────────────────
+function atualizar() {
+  const badge   = document.getElementById('status-badge');
+  const icon    = document.getElementById('status-icon');
+  const text    = document.getElementById('status-text');
+  const sub     = document.getElementById('status-sub');
+  const overlay = document.getElementById('alert-overlay');
+  const pIcon   = document.getElementById('person-icon');
+
+  // Status badge
+  badge.className = 'status-badge';
+  if (estado === 'seguro') {
+    badge.classList.add('ok');
+    icon.textContent = '✅'; text.textContent = 'SEGURO'; sub.textContent = 'Nenhuma ocorrência';
+    overlay.style.opacity = '0'; overlay.textContent = '';
+    pIcon.className = 'person-icon safe visible';
+  } else if (estado === 'aviso') {
+    badge.classList.add('warn');
+    icon.textContent = '⚠️'; text.textContent = 'AVISO';
+    sub.textContent = 'Pessoa na zona — ' + pessoaSeg + 's/' + 10 + 's';
+    overlay.style.opacity = '0';
+    pIcon.className = 'person-icon zone visible';
+  } else {
+    badge.classList.add('alert');
+    if (estado === 'alerta_pessoa') {
+      icon.textContent = '🚨'; text.textContent = 'ALERTA'; sub.textContent = 'EVACUAÇÃO IMEDIATA!';
+      overlay.style.opacity = '1'; overlay.textContent = '🚨 EVACUAÇÃO!';
+      pIcon.className = 'person-icon danger visible';
+    } else {
+      icon.textContent = '🌡️'; text.textContent = 'ALERTA'; sub.textContent = 'Temperatura crítica!';
+      overlay.style.opacity = '1'; overlay.textContent = '🌡️ TEMP CRÍTICA!';
+      pIcon.className = 'person-icon safe visible';
+    }
+  }
+
+  // Temperatura
+  const pct = Math.min((temp - 20) / 100 * 100, 100);
+  document.getElementById('temp-bar').style.width = pct + '%';
+  const tv = document.getElementById('temp-value');
+  tv.textContent = temp.toFixed(1) + '°C';
+  tv.style.color = temp >= 80 ? '#ff2244' : temp >= 65 ? '#ffaa00' : '#00cc66';
+
+  // Timer pessoa
+  const timerPct = Math.min(pessoaSeg / 10 * 100, 100);
+  const tn = document.getElementById('timer-num');
+  tn.textContent = pessoaSeg.toString().padStart(2,'0') + 's';
+  tn.style.color = pessoaSeg >= 10 ? '#ff2244' : pessoaSeg >= 7 ? '#ffaa00' : '#c0d0e8';
+  const tb = document.getElementById('timer-bar');
+  tb.style.width = timerPct + '%';
+  tb.style.background = pessoaSeg >= 10 ? '#ff2244' : pessoaSeg >= 7 ? '#ffaa00' : '#00cc66';
+
+  // Contadores
+  document.getElementById('cnt-alertas').textContent = alertasTotal;
+  document.getElementById('cnt-tick').textContent = tick;
+
+  // Planta SP01
+  const ps = document.getElementById('plant-sp01');
+  if (estado === 'seguro') ps.textContent = '🟢 Normal — ' + temp.toFixed(0) + '°C';
+  else if (estado === 'aviso') ps.textContent = '🟡 Aviso — Pessoa na zona';
+  else ps.textContent = '🔴 ALERTA — Ação necessária';
+
+  // JSON display
+  const elapsed = Math.round((Date.now() - startTime) / 1000);
+  const data = {
+    t: tick,
+    planta: "SP01",
+    area: "FORNO_A",
+    estado: estado.toUpperCase(),
+    temperatura: parseFloat(temp.toFixed(1)),
+    alerta_temp: temp >= 80,
+    pessoa_zona: pessoaNaZona,
+    pessoa_seg: pessoaSeg,
+    alerta_pessoa: pessoaSeg >= 10,
+    alertas_total: alertasTotal,
+    mqtt_topico: "quantumfinance/sp01/forno_a"
+  };
+  document.getElementById('json-display').textContent = JSON.stringify(data, null, 2);
+
+  // MQTT feed
+  const ml = document.getElementById('mqtt-list');
+  const mline = document.createElement('div');
+  mline.className = 'mqtt-line';
+  mline.textContent = '→ ' + JSON.stringify(data).slice(0,90) + '...';
+  ml.insertBefore(mline, ml.firstChild);
+  if (ml.children.length > 8) ml.removeChild(ml.lastChild);
+}
+
+// ─── Chart temperatura ──────────────────────────────────────────────────
+const canvas = document.getElementById('chart');
+const ctx = canvas.getContext('2d');
+canvas.width = canvas.parentElement.offsetWidth - 32;
+canvas.height = 120;
+
+function drawChart() {
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';
+  ctx.lineWidth = 1;
+  [20, 50, 80, 110].forEach(y => {
+    const py = h - (y - 20) / 100 * (h - 20) - 10;
+    ctx.beginPath(); ctx.moveTo(30, py); ctx.lineTo(w, py);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,.3)';
+    ctx.font = '10px Courier New';
+    ctx.fillText(y + '°', 2, py + 4);
+  });
+
+  // Linha de limite
+  const limitY = h - (80 - 20) / 100 * (h - 20) - 10;
+  ctx.strokeStyle = 'rgba(255,34,68,.5)';
+  ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.moveTo(30, limitY); ctx.lineTo(w, limitY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Curva temperatura
+  const pts = tempHistory;
+  const step = (w - 30) / (pts.length - 1);
+  ctx.strokeStyle = '#00aaff';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = '#00aaff';
+  ctx.shadowBlur = 6;
+  ctx.beginPath();
+  pts.forEach((v, i) => {
+    const x = 30 + i * step;
+    const y = h - (v - 20) / 100 * (h - 20) - 10;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+}
+
+// ─── Loop de atualização ────────────────────────────────────────────────
+function loop() {
+  // Adiciona variação aleatória à temperatura
+  const variation = (Math.random() - 0.5) * 2;
+  if (estado === 'alerta_temp') {
+    temp = Math.min(120, Math.max(78, temp + variation * 0.5));
+  } else if (estado !== 'alerta_temp') {
+    temp = Math.max(20, Math.min(79.9, temp + variation * 0.3));
+    document.getElementById('temp-slider').value = temp;
+    document.getElementById('temp-display').textContent = temp.toFixed(0) + '°C';
+  }
+
+  tempHistory.push(parseFloat(temp.toFixed(1)));
+  if (tempHistory.length > 30) tempHistory.shift();
+
+  atualizar();
+  drawChart();
+  tick++;
+}
+
+setInterval(loop, 1000);
+loop();
+</script>
+
+</body>
+</html>
