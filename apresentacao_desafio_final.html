@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IoT para Segurança Industrial — Gabriela Feriani Leoni</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --accent:  #e8003d;
+  --blue:    #00d4ff;
+  --green:   #00ff88;
+  --yellow:  #ffc800;
+  --bg:      #080818;
+  --bg2:     #10102a;
+  --card:    rgba(255,255,255,0.05);
+  --border:  rgba(255,255,255,0.09);
+  --sub:     #7878a0;
+}
+
+body {
+  font-family: 'Segoe UI', -apple-system, Arial, sans-serif;
+  background: var(--bg);
+  color: #fff;
+  overflow: hidden;
+  height: 100vh; width: 100vw;
+}
+
+/* ── Progress bar ──────────────────────────────── */
+#progress {
+  position: fixed; top: 0; left: 0;
+  height: 3px; background: var(--accent);
+  transition: width .35s ease; z-index: 200;
+}
+
+/* ── Navigation ────────────────────────────────── */
+#nav {
+  position: fixed; bottom: 18px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(0,0,0,.65); backdrop-filter: blur(12px);
+  padding: 7px 18px; border-radius: 40px;
+  border: 1px solid var(--border); z-index: 200;
+}
+.nbtn {
+  background: var(--card); border: 1px solid var(--border);
+  color: #fff; padding: 7px 16px; border-radius: 20px;
+  cursor: pointer; font-size: 13px; transition: background .2s;
+}
+.nbtn:hover { background: var(--accent); border-color: var(--accent); }
+#ctr { font-size: 13px; color: var(--sub); min-width: 48px; text-align: center; }
+
+/* ── Slides ─────────────────────────────────────── */
+.slide {
+  position: absolute; inset: 0;
+  display: none; flex-direction: column;
+  padding: 48px 68px 80px;
+  background: linear-gradient(155deg, var(--bg) 0%, var(--bg2) 100%);
+}
+.slide.on { display: flex; }
+
+.snum {
+  position: absolute; top: 18px; right: 28px;
+  font-size: 11px; color: var(--sub); font-family: monospace;
+}
+
+.corner {
+  position: absolute; top: 0; right: 0;
+  width: 220px; height: 220px;
+  background: radial-gradient(circle at top right,
+    rgba(232,0,61,.13) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ── Typography ─────────────────────────────────── */
+.lbl {
+  font-size: 11px; text-transform: uppercase;
+  letter-spacing: 2.5px; color: var(--accent);
+  font-weight: 700; margin-bottom: 4px;
+}
+.bar { width: 52px; height: 3px; background: var(--accent);
+  border-radius: 2px; margin-bottom: 10px; }
+
+h2 { font-size: 1.75rem; font-weight: 700; margin-bottom: 22px; }
+h3 { font-size: 1.05rem; font-weight: 600; color: var(--blue); margin-bottom: 9px; }
+p  { font-size: .9rem; line-height: 1.6; color: rgba(255,255,255,.82); }
+
+/* ── Cards ──────────────────────────────────────── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 11px; padding: 18px;
+}
+.cl { border-left: 3px solid var(--accent); }
+.cb { border-left: 3px solid var(--blue); }
+.cg { border-left: 3px solid var(--green); }
+.cy { border-left: 3px solid var(--yellow); }
+
+/* ── Grids ──────────────────────────────────────── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+/* ── List items ─────────────────────────────────── */
+.it {
+  display: flex; align-items: flex-start;
+  gap: 9px; margin-bottom: 9px;
+  font-size: .88rem; line-height: 1.55;
+}
+.dot { width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); margin-top: 6px; flex-shrink: 0; }
+.dotb { background: var(--blue); }
+.dotg { background: var(--green); }
+.doty { background: var(--yellow); }
+.ok  { color: var(--green);  font-size: 1.1rem; flex-shrink: 0; line-height: 1.55; }
+.no  { color: var(--accent); font-size: 1.1rem; flex-shrink: 0; line-height: 1.55; }
+
+/* ── Chips ──────────────────────────────────────── */
+.chip  { display: inline-block; background: rgba(0,212,255,.1);
+  border: 1px solid rgba(0,212,255,.3); color: var(--blue);
+  padding: 3px 11px; border-radius: 20px; font-size: .75rem; font-weight: 600; }
+.chipr { background: rgba(232,0,61,.1); border-color: rgba(232,0,61,.3); color: var(--accent); }
+.chipg { background: rgba(0,255,136,.1); border-color: rgba(0,255,136,.3); color: var(--green); }
+.chipy { background: rgba(255,200,0,.1);  border-color: rgba(255,200,0,.3);  color: var(--yellow); }
+
+/* ── Icon circle ────────────────────────────────── */
+.ic {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.15rem; flex-shrink: 0;
+}
+.icr { background: rgba(232,0,61,.18); }
+.icb { background: rgba(0,212,255,.18); }
+.icg { background: rgba(0,255,136,.18); }
+.icy { background: rgba(255,200,0,.18); }
+
+/* ── Highlight question box ─────────────────────── */
+.qbox {
+  background: rgba(232,0,61,.08);
+  border: 1px solid rgba(232,0,61,.3);
+  border-radius: 10px; padding: 14px 18px; margin-bottom: 18px;
+}
+.qbox .ql {
+  font-size: 10px; text-transform: uppercase;
+  letter-spacing: 2px; color: var(--accent); font-weight: 700; margin-bottom: 5px;
+}
+.qbox p { font-size: .95rem; color: #fff; font-style: italic; }
+
+/* ── Big check for conclusion ───────────────────── */
+.bchk {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 18px; background: var(--card);
+  border: 1px solid var(--border); border-radius: 10px; margin-bottom: 11px;
+}
+.bchk .ci {
+  width: 34px; height: 34px; background: rgba(0,255,136,.14);
+  border-radius: 50%; display: flex; align-items: center;
+  justify-content: center; color: var(--green); font-size: .95rem; flex-shrink: 0;
+}
+
+/* ── Architecture ───────────────────────────────── */
+.arch {
+  border-radius: 11px; padding: 14px 18px;
+  position: relative; margin-bottom: 10px;
+}
+.arche { border: 1px solid rgba(0,212,255,.35); background: rgba(0,212,255,.04); }
+.archc { border: 1px solid rgba(232,0,61,.35);  background: rgba(232,0,61,.04); }
+.archtag {
+  position: absolute; top: -11px; left: 18px;
+  background: var(--bg2); padding: 2px 10px;
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+}
+.acomps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.acomp {
+  background: rgba(255,255,255,.07); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 11px; font-size: .78rem;
+  display: flex; align-items: center; gap: 5px;
+}
+.aarrow { color: var(--sub); font-size: 1.3rem; }
+
+/* ── Table ──────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+th { background: rgba(232,0,61,.18); color: var(--accent);
+  padding: 9px 14px; text-align: left;
+  font-size: .72rem; text-transform: uppercase; letter-spacing: 1px; }
+td { padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,.05);
+  color: rgba(255,255,255,.85); }
+td:first-child { color: var(--blue); font-weight: 600; }
+tr:hover td { background: rgba(255,255,255,.025); }
+
+/* ════════════════════════════════════════════════
+   SLIDE 1 — CAPA
+   ════════════════════════════════════════════════ */
+#s1 {
+  justify-content: center; align-items: flex-start;
+  background: linear-gradient(155deg, #050512 0%, #0d0d28 60%, #180516 100%);
+}
+.badge {
+  background: rgba(232,0,61,.14); border: 1px solid rgba(232,0,61,.3);
+  color: var(--accent); padding: 5px 15px; border-radius: 20px;
+  font-size: .78rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; display: inline-block; margin-bottom: 24px;
+}
+#s1 h1 {
+  font-size: 3rem; max-width: 680px; line-height: 1.1;
+  background: linear-gradient(135deg, #fff 35%, #9090ff 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.hline {
+  width: 76px; height: 4px; margin: 22px 0;
+  background: linear-gradient(90deg, var(--accent), var(--blue));
+  border-radius: 2px;
+}
+.ablock { margin-top: 36px; display: flex; align-items: center; gap: 14px; }
+.adiv { width: 1px; height: 38px; background: rgba(255,255,255,.18); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 1 — CAPA
+     ══════════════════════════════════════════════════════ -->
+<div class="slide on" id="s1">
+  <div class="corner"></div>
+  <div class="snum">01 / 09</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div class="badge">MBA Robotics &amp; IOT — FIAP 2026</div>
+
+    <h1>IoT para<br>Segurança Industrial</h1>
+
+    <div class="hline"></div>
+
+    <p style="font-size:1.05rem;color:rgba(255,255,255,.72);max-width:560px;line-height:1.75;">
+      Monitoramento inteligente de áreas de risco com<br>
+      <strong style="color:#fff;">Edge Computing</strong> e
+      <strong style="color:#fff;">TinyML</strong> para Ambientes Industriais (Indústria 4.0)
+    </p>
+
+    <div class="ablock">
+      <div>
+        <div class="lbl">Aluna</div>
+        <div style="font-size:.98rem;font-weight:600;">Gabriela Feriani Leoni</div>
+      </div>
+      <div class="adiv"></div>
+      <div>
+        <div class="lbl">Disciplina</div>
+        <div style="font-size:.98rem;">Robotics and IOT</div>
+      </div>
+      <div class="adiv"></div>
+      <div>
+        <div class="lbl">Período</div>
+        <div style="font-size:.98rem;">2024-2</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+    <span class="chip">Edge-First Architecture</span>
+    <span class="chip">TinyML · Edge Impulse</span>
+    <span class="chip">Indústria 4.0</span>
+    <span class="chipr">Segurança Industrial</span>
+    <span class="chipg">IoT + Cloud</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 2 — INTRODUÇÃO E PROBLEMÁTICA
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s2">
+  <div class="corner"></div>
+  <div class="snum">02 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Introdução</div>
+  <h2>Problemática</h2>
+
+  <div class="g2" style="flex:1;gap:22px;">
+    <!-- esquerda -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card cb">
+        <h3>Contexto</h3>
+        <div class="it"><div class="dot dotb"></div><p>QuantumFinance atua como habilitador de Marketplace de Soluções IoT para Indústria 4.0</p></div>
+        <div class="it"><div class="dot dotb"></div><p>Plantas industriais distribuídas ao redor do mundo com equipamentos de alto risco</p></div>
+        <div class="it"><div class="dot dotb"></div><p>Monitoramento atual: manual, pontual e sem resposta em tempo real</p></div>
+      </div>
+      <div class="card cy">
+        <h3 style="color:var(--yellow);">Consequências da Inação</h3>
+        <div class="it"><div class="dot doty"></div><p>Acidentes graves e perdas humanas</p></div>
+        <div class="it"><div class="dot doty"></div><p>Paradas de produção não planejadas e prejuízos financeiros</p></div>
+        <div class="it"><div class="dot doty"></div><p>Multas regulatórias — NR-12, ISO 13849, IEC 62061</p></div>
+        <div class="it"><div class="dot doty"></div><p>Danos reputacionais e passivos trabalhistas</p></div>
+      </div>
+    </div>
+
+    <!-- direita -->
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card cl">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;">
+          <div class="ic icr">⚠️</div>
+          <div>
+            <div class="lbl" style="margin:0 0 2px;">Problema 1</div>
+            <h3 style="color:var(--accent);margin:0;">Presença Humana em Zonas de Risco</h3>
+          </div>
+        </div>
+        <p>Pessoas expostas a áreas com fornos industriais por tempo superior ao permitido. Sem automação, a detecção depende exclusivamente de fiscalização humana — ineficaz e sujeita a falha.</p>
+        <div style="margin-top:11px;padding-top:11px;border-top:1px solid var(--border);">
+          <span class="chipr">Risco: ALTO</span>
+        </div>
+      </div>
+
+      <div class="card cl">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:11px;">
+          <div class="ic icr">🌡️</div>
+          <div>
+            <div class="lbl" style="margin:0 0 2px;">Problema 2</div>
+            <h3 style="color:var(--accent);margin:0;">Temperatura Fora dos Limites Seguros</h3>
+          </div>
+        </div>
+        <p>Equipamentos industriais (fornos, reatores) operando fora da faixa segura. Sem monitoramento contínuo, falhas catastróficas são imprevisíveis e não há tempo de reação.</p>
+        <div style="margin-top:11px;padding-top:11px;border-top:1px solid var(--border);">
+          <span class="chipr">Risco: ALTO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 3 — MOTIVAÇÃO E OBJETIVO
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s3">
+  <div class="corner"></div>
+  <div class="snum">03 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Por que agir agora</div>
+  <h2>Motivação e Objetivo</h2>
+
+  <div class="g2" style="flex:1;gap:22px;">
+    <!-- Motivação -->
+    <div>
+      <h3 style="margin-bottom:14px;">Motivação</h3>
+      <div class="it" style="margin-bottom:14px;">
+        <div class="ic icr">📜</div>
+        <div><strong style="font-size:.9rem;">Regulamentações</strong>
+          <p>NR-12, ISO 13849 e IEC 62061 exigem proteção ativa com monitoramento contínuo em áreas de risco.</p></div>
+      </div>
+      <div class="it" style="margin-bottom:14px;">
+        <div class="ic icy">💰</div>
+        <div><strong style="font-size:.9rem;">ROI Imediato</strong>
+          <p>O custo de um acidente industrial (vidas, multas, parada de produção) supera em ordens de magnitude o custo da tecnologia IoT.</p></div>
+      </div>
+      <div class="it" style="margin-bottom:14px;">
+        <div class="ic icb">🏭</div>
+        <div><strong style="font-size:.9rem;">Indústria 4.0</strong>
+          <p>Digitalização inteligente é vantagem competitiva. Monitoramento em tempo real é requisito para operar com excelência.</p></div>
+      </div>
+      <div class="it">
+        <div class="ic icg">🌍</div>
+        <div><strong style="font-size:.9rem;">Escala Global</strong>
+          <p>Múltiplas plantas exigem solução centralizada que não dependa de equipes locais em cada unidade.</p></div>
+      </div>
+    </div>
+
+    <!-- Objetivo -->
+    <div>
+      <h3 style="margin-bottom:14px;">Objetivo da Solução</h3>
+
+      <div class="card cb" style="margin-bottom:11px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">👁️</span>
+          <div><strong>Detecção em Tempo Real</strong>
+            <p>Identificar presença humana em zonas de risco e alertar em &lt;10 ms via câmera + IA na borda — sem depender da nuvem.</p></div>
+        </div>
+      </div>
+
+      <div class="card cb" style="margin-bottom:11px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">🌡️</span>
+          <div><strong>Monitoramento Contínuo</strong>
+            <p>Monitorar temperatura de equipamentos 24/7 e acionar proteções automaticamente ao ultrapassar limites seguros.</p></div>
+        </div>
+      </div>
+
+      <div class="card cg" style="margin-bottom:11px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">📡</span>
+          <div><strong>Telemetria para a Nuvem</strong>
+            <p>Enviar eventos e dados para análise histórica e preditiva centralizada de todas as plantas globalmente.</p></div>
+        </div>
+      </div>
+
+      <div class="card cg">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.4rem;">🔮</span>
+          <div><strong>Manutenção Preditiva e Prescritiva</strong>
+            <p>Antecipar falhas com ML em nuvem — de reativa para prescritiva: "substitua o componente X em 15 dias".</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 4 — ARQUITETURA
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s4">
+  <div class="corner"></div>
+  <div class="snum">04 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Design da Solução</div>
+  <h2>Arquitetura Edge + Cloud</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+
+    <div class="arch arche">
+      <div class="archtag" style="color:var(--blue);">📡 CAMADA DE BORDA (EDGE)</div>
+      <div class="acomps">
+        <div class="acomp">📷 Câmera<br><small style="color:var(--sub);">OpenMV / ESP32-CAM</small></div>
+        <span class="aarrow">→</span>
+        <div class="acomp" style="border-color:rgba(0,212,255,.35);">🧠 TinyML<br><small style="color:var(--sub);">Edge Impulse · RP2040</small></div>
+        <span class="aarrow">→</span>
+        <div class="acomp">⚙️ Raspberry Pi Pico W<br><small style="color:var(--sub);">Processamento local</small></div>
+        <span class="aarrow">→</span>
+        <div class="acomp" style="border-color:rgba(232,0,61,.35);">🚨 Alerta Local<br><small style="color:var(--sub);">LED / Buzzer / Relay</small></div>
+        <div class="acomp" style="margin-left:8px;">🌡️ Sensor Temp.<br><small style="color:var(--sub);">Termopar + MAX6675</small></div>
+      </div>
+      <div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap;">
+        <span class="chip">Inferência Local</span>
+        <span class="chip">&lt;10 ms latência</span>
+        <span class="chip">Funciona Offline</span>
+        <span class="chipr">Edge-First</span>
+      </div>
+    </div>
+
+    <div style="text-align:center;color:var(--sub);font-size:.9rem;padding:4px 0;">
+      ↕&nbsp; <strong style="color:#fff;">MQTT / TLS</strong> &nbsp;·&nbsp; Wi-Fi / 4G / 5G
+    </div>
+
+    <div class="arch" style="border:1px solid rgba(255,170,0,.35);background:rgba(255,170,0,.04);margin-bottom:8px;">
+      <div class="archtag" style="color:var(--yellow);">🔀 BROKER + PROCESSAMENTO</div>
+      <div class="acomps">
+        <div class="acomp" style="border-color:rgba(255,170,0,.4);">📨 Mosquitto<br><small style="color:var(--sub);">MQTT Broker</small></div>
+        <span class="aarrow">→</span>
+        <div class="acomp" style="border-color:rgba(255,170,0,.4);">⚡ Node-RED<br><small style="color:var(--sub);">Flows · Regras · Alertas</small></div>
+        <span class="aarrow">→</span>
+        <div class="acomp" style="border-color:rgba(232,0,61,.35);">🚨 Notificações<br><small style="color:var(--sub);">Email · SMS · Slack</small></div>
+        <span class="aarrow" style="margin-left:8px;">↓</span>
+        <div class="acomp" style="border-color:rgba(0,212,255,.35);">🗄️ InfluxDB<br><small style="color:var(--sub);">Time Series DB</small></div>
+        <span class="aarrow">→</span>
+        <div class="acomp">📊 Grafana<br><small style="color:var(--sub);">Dashboard</small></div>
+      </div>
+      <div style="margin-top:9px;display:flex;gap:7px;flex-wrap:wrap;">
+        <span class="chipy">Mosquitto Broker</span>
+        <span class="chipy">Node-RED Flows</span>
+        <span class="chip">InfluxDB</span>
+        <span class="chipg">Grafana</span>
+        <span class="chipr">Alertas Automáticos</span>
+      </div>
+    </div>
+
+    <div class="g3" style="gap:10px;">
+      <div class="card" style="text-align:center;padding:11px;">
+        <div style="font-size:1.4rem;margin-bottom:5px;">⚡</div>
+        <strong style="font-size:.85rem;">Resposta Imediata</strong>
+        <p style="font-size:.8rem;color:var(--sub);margin-top:3px;">Alerta local sem depender da nuvem</p>
+      </div>
+      <div class="card" style="text-align:center;padding:11px;">
+        <div style="font-size:1.4rem;margin-bottom:5px;">🔒</div>
+        <strong style="font-size:.85rem;">Dados Seguros</strong>
+        <p style="font-size:.8rem;color:var(--sub);margin-top:3px;">Vídeo processado na planta</p>
+      </div>
+      <div class="card" style="text-align:center;padding:11px;">
+        <div style="font-size:1.4rem;margin-bottom:5px;">🌍</div>
+        <strong style="font-size:.85rem;">Visão Global</strong>
+        <p style="font-size:.8rem;color:var(--sub);margin-top:3px;">Dashboard unificado de todas as plantas</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 5 — FERRAMENTAL E TÉCNICAS
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s5">
+  <div class="corner"></div>
+  <div class="snum">05 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Stack Tecnológico</div>
+  <h2>Ferramental e Técnicas</h2>
+
+  <div style="flex:1;display:flex;flex-direction:column;gap:14px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Camada</th>
+          <th>Tecnologia</th>
+          <th>Função</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Hardware Borda</td><td>Raspberry Pi Pico W (RP2040)</td><td>Processamento edge — baixo custo (~R$30), Wi-Fi integrado</td></tr>
+        <tr><td>Visão Computacional</td><td>OpenMV Cam / ESP32-CAM</td><td>Detecção de presença humana em tempo real</td></tr>
+        <tr><td>Temperatura</td><td>Termopar K + MAX6675</td><td>Monitoramento contínuo até 1.200 °C</td></tr>
+        <tr><td>IA na Borda</td><td>Edge Impulse + TinyML</td><td>Inferência local — modelo com <strong style="color:var(--green);">100% de acurácia</strong> (validado)</td></tr>
+        <tr><td>Protocolo IoT</td><td>MQTT / TLS (QoS 1)</td><td>Comunicação leve, segura e eficiente — garante entrega das mensagens</td></tr>
+        <tr><td>MQTT Broker</td><td style="color:#ffc800;">Mosquitto</td><td>Intermediário entre edge e cloud — recebe publicações do Pico W</td></tr>
+        <tr><td>Processamento</td><td style="color:#ffc800;">Node-RED</td><td>Flows visuais: regras de alerta, roteamento de dados, integrações</td></tr>
+        <tr><td>Banco de Dados</td><td>InfluxDB</td><td>Séries temporais de telemetria — temperatura, eventos, alertas</td></tr>
+        <tr><td>ML Cloud</td><td>Azure ML / SageMaker</td><td>Manutenção preditiva e prescritiva centralizada</td></tr>
+        <tr><td>Dashboard</td><td style="color:#ffc800;">Grafana</td><td>Visualização unificada de todas as plantas em tempo real</td></tr>
+      </tbody>
+    </table>
+
+    <div class="card cb" style="display:flex;align-items:center;gap:18px;padding:13px 18px;">
+      <div style="font-size:1.8rem;">🧪</div>
+      <div style="flex:1;">
+        <strong>Prova de Conceito Realizada — Desafio 7</strong>
+        <p style="font-size:.85rem;margin-top:3px;">
+          Modelo TinyML treinado no Edge Impulse (dataset Fiap_MBA_DSA — manutenção preditiva por vibração) com
+          <strong style="color:var(--green);">100% de accuracy e F1-Score 1.0</strong>,
+          executado no Raspberry Pi Pico W e simulado no Wokwi.com. Mesmo pipeline aplicável à detecção de falhas térmicas e de presença.
+        </p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;">
+        <span class="chipg">100% Accuracy</span>
+        <span class="chip">Wokwi Simulado</span>
+        <span class="chipr">Pico W Real</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 6 — QUESTÃO 1
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s6">
+  <div class="corner"></div>
+  <div class="snum">06 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Questão 1</div>
+  <h2>Dispositivos Conectados: É Seguro?</h2>
+
+  <div class="qbox">
+    <div class="ql">❓ Questão</div>
+    <p>"O uso de dispositivos conectados à internet é uma opção segura para esse caso de uso? Justificar!"</p>
+  </div>
+
+  <div class="g2" style="flex:1;gap:18px;">
+    <!-- Riscos -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="ic icr">⚠️</div>
+        <h3 style="color:var(--accent);margin:0;">Riscos Existentes</h3>
+      </div>
+      <div class="card cl">
+        <div class="it"><span class="no">✗</span><p>Ataques DDoS em redes OT/IT industriais</p></div>
+        <div class="it"><span class="no">✗</span><p>Interceptação de dados em trânsito (man-in-the-middle)</p></div>
+        <div class="it"><span class="no">✗</span><p>Acesso não autorizado a dispositivos IoT mal configurados</p></div>
+        <div class="it"><span class="no">✗</span><p>Dependência de conectividade para funções de segurança críticas</p></div>
+        <div class="it"><span class="no">✗</span><p>Firmware vulnerável sem processo de atualização segura</p></div>
+      </div>
+    </div>
+
+    <!-- Mitigações -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="ic icg">✅</div>
+        <h3 style="color:var(--green);margin:0;">Sim — Com a Arquitetura Correta</h3>
+      </div>
+      <div class="card cg">
+        <div class="it"><span class="ok">✓</span><p><strong>Edge-First:</strong> decisões críticas são locais — se a internet cair, alertas e atuações continuam funcionando</p></div>
+        <div class="it"><span class="ok">✓</span><p><strong>TLS + MQTT-S:</strong> criptografia ponta a ponta em toda comunicação cloud ↔ borda</p></div>
+        <div class="it"><span class="ok">✓</span><p><strong>Certificados X.509</strong> por dispositivo — autenticação mútua, nenhum dispositivo não autorizado se conecta</p></div>
+        <div class="it"><span class="ok">✓</span><p><strong>Segmentação de rede</strong> (DMZ industrial / VLAN OT isolada de IT) — limita superfície de ataque</p></div>
+        <div class="it"><span class="ok">✓</span><p><strong>OTA assinado digitalmente</strong> — firmware não pode ser adulterado ou substituído por atacante</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px;background:rgba(0,255,136,.05);border-color:rgba(0,255,136,.25);display:flex;align-items:center;gap:14px;">
+    <span style="font-size:1.4rem;">💡</span>
+    <p><strong style="color:var(--green);">Conclusão:</strong> Sim, é seguro — desde que a arquitetura seja Edge-First. A conectividade internet é um complemento para análise centralizada, não uma dependência para as funções de segurança imediatas.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 7 — QUESTÃO 2
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s7">
+  <div class="corner"></div>
+  <div class="snum">07 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Questão 2</div>
+  <h2>Edge Computing: Confiabilidade e Segurança</h2>
+
+  <div class="qbox">
+    <div class="ql">❓ Questão</div>
+    <p>"Como a utilização de computação de borda pode melhorar a confiabilidade e segurança do sistema em questão?"</p>
+  </div>
+
+  <div class="g2" style="flex:1;gap:18px;">
+    <!-- Confiabilidade -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="ic icb">⚡</div>
+        <h3 style="margin:0;">Confiabilidade</h3>
+      </div>
+      <div class="card cb">
+        <div class="it"><span class="ok" style="color:var(--blue);">→</span>
+          <p><strong>Latência &lt;10 ms</strong> vs. 200 ms+ via nuvem — crítico para alertas industriais onde cada segundo conta</p></div>
+        <div class="it"><span class="ok" style="color:var(--blue);">→</span>
+          <p><strong>Funciona offline:</strong> alertas locais, acionamento de relés e registro de eventos sem internet</p></div>
+        <div class="it"><span class="ok" style="color:var(--blue);">→</span>
+          <p><strong>Sem ponto único de falha:</strong> nuvem indisponível ≠ sistema de segurança parado</p></div>
+        <div class="it"><span class="ok" style="color:var(--blue);">→</span>
+          <p><strong>Reduz tráfego de rede:</strong> envia apenas eventos relevantes, preservando largura de banda</p></div>
+        <div class="it"><span class="ok" style="color:var(--blue);">→</span>
+          <p><strong>Tempo determinístico:</strong> resposta previsível, sem variação por congestionamento de rede</p></div>
+      </div>
+    </div>
+
+    <!-- Segurança -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <div class="ic icg">🔒</div>
+        <h3 style="margin:0;">Segurança</h3>
+      </div>
+      <div class="card cg">
+        <div class="it"><span class="ok">✓</span>
+          <p><strong>Dados de vídeo ficam na planta</strong> — processamento local garante privacidade e conformidade com LGPD / GDPR</p></div>
+        <div class="it"><span class="ok">✓</span>
+          <p><strong>Menor superfície de ataque:</strong> sem dado sensível em trânsito na nuvem = menor exposição</p></div>
+        <div class="it"><span class="ok">✓</span>
+          <p><strong>Fail-safe por design:</strong> se a nuvem for atacada ou indisponível, a borda continua protegendo</p></div>
+        <div class="it"><span class="ok">✓</span>
+          <p><strong>Isolamento de redes:</strong> dispositivos edge operam em VLAN OT separada do tráfego corporativo</p></div>
+        <div class="it"><span class="ok">✓</span>
+          <p><strong>Conformidade regulatória:</strong> dados críticos processados localmente facilitam auditorias NR-12</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px;background:rgba(0,212,255,.05);border-color:rgba(0,212,255,.25);display:flex;align-items:center;gap:14px;">
+    <span style="font-size:1.4rem;">🏭</span>
+    <p><strong style="color:var(--blue);">Para ambientes industriais:</strong> edge computing não é otimização de performance — é requisito de segurança funcional para sistemas que protegem vidas humanas. A nuvem amplifica; a borda protege.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 8 — CONSIDERAÇÕES E POTENCIAL
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s8">
+  <div class="corner"></div>
+  <div class="snum">08 / 09</div>
+  <div class="bar"></div>
+  <div class="lbl">Visão Estratégica</div>
+  <h2>Considerações e Potencial</h2>
+
+  <div class="g3" style="flex:1;gap:18px;">
+    <!-- Negócio -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">
+        <div class="ic icy">📈</div>
+        <h3 style="color:var(--yellow);margin:0;">Potencial de Negócio</h3>
+      </div>
+      <div class="card cy">
+        <div class="it"><div class="dot doty"></div><p><strong>SaaS industrial</strong> — assinatura por planta monitorada, receita recorrente</p></div>
+        <div class="it"><div class="dot doty"></div><p>Hardware edge: Pico W (~R$30) vs. custo de 1 acidente industrial</p></div>
+        <div class="it"><div class="dot doty"></div><p>Mesma arquitetura replicada para N plantas globais com custo marginal baixo</p></div>
+        <div class="it"><div class="dot doty"></div><p>Cloud: pay-per-use, escala conforme demanda</p></div>
+        <div class="it"><div class="dot doty"></div><p>Parcerias com integradores de automação industrial (Siemens, ABB, Rockwell)</p></div>
+        <div class="it"><div class="dot doty"></div><p>Redução de prêmio de seguro industrial com histórico de telemetria</p></div>
+      </div>
+    </div>
+
+    <!-- Futuro -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">
+        <div class="ic icb">🔮</div>
+        <h3 style="margin:0;">Evoluções Futuras</h3>
+      </div>
+      <div class="card cb">
+        <div class="it"><div class="dot dotb"></div><p><strong>Federated Learning:</strong> modelo melhora com dados de todas as plantas sem comprometer privacidade</p></div>
+        <div class="it"><div class="dot dotb"></div><p><strong>Digital Twin:</strong> simulação em tempo real do equipamento para antecipar falhas</p></div>
+        <div class="it"><div class="dot dotb"></div><p><strong>Integração ERP/SAP:</strong> ordens de manutenção geradas automaticamente</p></div>
+        <div class="it"><div class="dot dotb"></div><p><strong>5G + MEC:</strong> latência ultra-baixa para controle em tempo real</p></div>
+        <div class="it"><div class="dot dotb"></div><p><strong>Alertas prescritivos:</strong> "substitua o componente X nos próximos 15 dias"</p></div>
+      </div>
+    </div>
+
+    <!-- Exequibilidade -->
+    <div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:13px;">
+        <div class="ic icg">✅</div>
+        <h3 style="color:var(--green);margin:0;">Exequibilidade</h3>
+      </div>
+      <div class="card cg">
+        <div class="it"><span class="ok">✓</span><p>Tecnologia disponível e madura — sem dependência de pesquisa</p></div>
+        <div class="it"><span class="ok">✓</span><p>Edge Impulse: gratuito para prototipagem e POC</p></div>
+        <div class="it"><span class="ok">✓</span><p>Raspberry Pi Pico W: baixíssimo custo de hardware</p></div>
+        <div class="it"><span class="ok">✓</span><p>MQTT + IoT Hub: infraestrutura IoT consolidada</p></div>
+        <div class="it"><span class="ok">✓</span><p><strong>POC realizada:</strong> 100% accuracy no modelo TinyML (Desafio 7)</p></div>
+        <div class="it"><span class="ok">✓</span><p>Time-to-market estimado: <strong>3–6 meses para MVP</strong></p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     SLIDE 9 — CONCLUSÃO
+     ══════════════════════════════════════════════════════ -->
+<div class="slide" id="s9">
+  <div class="corner"></div>
+  <div class="snum">09 / 09</div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;max-width:760px;">
+    <div class="bar"></div>
+    <div class="lbl">Resumo</div>
+    <h2 style="margin-bottom:26px;">Conclusão</h2>
+
+    <div class="bchk">
+      <div class="ci">✓</div>
+      <div>
+        <strong>Solução Edge-First para Segurança Industrial</strong>
+        <p style="font-size:.88rem;color:var(--sub);">Arquitetura que prioriza a borda para decisões críticas — sem dependência de internet para alertas e atuações de segurança.</p>
+      </div>
+    </div>
+
+    <div class="bchk">
+      <div class="ci">✓</div>
+      <div>
+        <strong>TinyML no Dispositivo — Resposta em &lt;10 ms</strong>
+        <p style="font-size:.88rem;color:var(--sub);">Modelo Edge Impulse com 100% de acurácia executado diretamente no Raspberry Pi Pico W. POC já validada no Desafio 7.</p>
+      </div>
+    </div>
+
+    <div class="bchk">
+      <div class="ci">✓</div>
+      <div>
+        <strong>Cloud para Análise Preditiva Centralizada</strong>
+        <p style="font-size:.88rem;color:var(--sub);">Telemetria de todas as plantas em um único dashboard com ML para manutenção prescritiva e histórico global.</p>
+      </div>
+    </div>
+
+    <div class="bchk">
+      <div class="ci">✓</div>
+      <div>
+        <strong>Seguro, Escalável e Exequível com Tecnologia de Hoje</strong>
+        <p style="font-size:.88rem;color:var(--sub);">Potencial de negócio como SaaS industrial — MVP em 3 a 6 meses, custo de hardware &lt; R$30 por ponto de monitoramento.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:22px;background:rgba(232,0,61,.07);border-color:rgba(232,0,61,.28);width:100%;padding:16px 22px;">
+      <p style="font-size:.98rem;color:#fff;text-align:center;font-style:italic;line-height:1.7;">
+        "A computação de borda não é apenas uma otimização de performance —<br>
+        <strong>é um requisito de segurança funcional para sistemas que protegem vidas humanas.</strong>"
+      </p>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;
+    margin-top:18px;padding-top:16px;border-top:1px solid var(--border);">
+    <div style="font-size:.8rem;color:var(--sub);display:flex;align-items:center;gap:8px;">
+      <div style="width:5px;height:5px;border-radius:50%;background:var(--accent);"></div>
+      Gabriela Feriani Leoni &nbsp;·&nbsp; MBA Robotics &amp; IOT &nbsp;·&nbsp; FIAP 2026
+    </div>
+    <span class="chip" style="font-size:.72rem;">github.com/gabrielaferiani-alt/WOKWI</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     NAVIGATION
+     ══════════════════════════════════════════════════════ -->
+<div id="nav">
+  <button class="nbtn" onclick="go(-1)">← Anterior</button>
+  <span id="ctr">1 / 9</span>
+  <button class="nbtn" onclick="go(1)">Próximo →</button>
+</div>
+
+<script>
+let cur = 1;
+const N = 9;
+
+function show(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('on'));
+  document.getElementById('s' + n).classList.add('on');
+  document.getElementById('ctr').textContent = n + ' / ' + N;
+  document.getElementById('progress').style.width = (n / N * 100) + '%';
+  cur = n;
+}
+
+function go(d) {
+  const next = cur + d;
+  if (next >= 1 && next <= N) show(next);
+}
+
+document.addEventListener('keydown', e => {
+  if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(1); }
+  if (['ArrowLeft','ArrowUp'].includes(e.key)) { e.preventDefault(); go(-1); }
+});
+
+show(1);
+</script>
+</body>
+</html>
