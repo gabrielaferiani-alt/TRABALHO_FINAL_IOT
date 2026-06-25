@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "author": "MBA FIAP 2026 — Desafio Final · QuantumFinance IoT",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-pi-pico-w",
+      "id": "pico",
+      "top": 140,
+      "left": 10,
+      "attrs": {}
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": 0,
+      "left": 280,
+      "attrs": { "address": "0x3c" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_temp",
+      "top": 340,
+      "left": 280,
+      "attrs": { "label": "TEMPERATURA", "value": "0.3" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_pessoa",
+      "top": 200,
+      "left": 440,
+      "attrs": { "color": "red", "label": "PESSOA NA ZONA" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_reset",
+      "top": 280,
+      "left": 440,
+      "attrs": { "color": "green", "label": "RESET ALERTAS" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_ok",
+      "top": 100,
+      "left": 460,
+      "attrs": { "color": "green", "label": "OK" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_alert",
+      "top": 140,
+      "left": 460,
+      "attrs": { "color": "red", "label": "ALERTA" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_warn",
+      "top": 120,
+      "left": 490,
+      "attrs": { "color": "yellow", "label": "AVISO" }
+    }
+  ],
+  "connections": [
+    ["pico:GP14", "oled1:SDA",    "green",  []],
+    ["pico:GP15", "oled1:SCL",    "blue",   []],
+    ["pico:3V3",  "oled1:VCC",    "red",    []],
+    ["pico:GND.2","oled1:GND",    "black",  []],
+
+    ["pico:GP26", "pot_temp:SIG", "orange", []],
+    ["pico:3V3",  "pot_temp:VCC", "red",    []],
+    ["pico:GND.2","pot_temp:GND", "black",  []],
+
+    ["pico:GP2",  "btn_pessoa:1.l","purple", []],
+    ["pico:GND.2","btn_pessoa:2.l","black",  []],
+
+    ["pico:GP3",  "btn_reset:1.l", "yellow", []],
+    ["pico:GND.2","btn_reset:2.l", "black",  []],
+
+    ["pico:GP6",  "led_ok:A",     "green",  []],
+    ["pico:GND.2","led_ok:K",     "black",  []],
+
+    ["pico:GP7",  "led_alert:A",  "red",    []],
+    ["pico:GND.2","led_alert:K",  "black",  []],
+
+    ["pico:GP8",  "led_warn:A",   "yellow", []],
+    ["pico:GND.2","led_warn:K",   "black",  []]
+  ],
+  "dependencies": {}
+}
