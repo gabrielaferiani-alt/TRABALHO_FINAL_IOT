@@ -134,7 +134,6 @@ prev_alerta = False
 ciclo = 0
 
 while True:
-    global _flag_pessoa, _flag_reset
 
     temp         = ler_temp()
     btn_agora    = not BTN_PESSOA.value()   # True se pressionado agora
