@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Instruções — Demo Completo</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI',Arial,sans-serif; background:#f5f5f0; color:#1a1a1a; padding:30px 20px; }
+.page { max-width:860px; margin:0 auto; background:white; padding:50px 60px; box-shadow:0 2px 16px rgba(0,0,0,.08); border-radius:4px; }
+h1 { color:#e8003d; font-size:1.6rem; margin-bottom:6px; }
+.meta { font-size:.85rem; color:#888; border-bottom:2px solid #e8003d; padding-bottom:14px; margin-bottom:28px; }
+h2 { font-size:1.1rem; font-weight:700; color:#1a1a1a; margin:28px 0 12px; display:flex; align-items:center; gap:10px; }
+h2 .badge { background:#e8003d; color:white; font-size:.72rem; padding:3px 10px; border-radius:20px; font-weight:700; }
+h2 .badge.blue { background:#0066cc; }
+h2 .badge.green { background:#007a45; }
+h2 .badge.yellow { background:#cc8800; }
+p { font-size:.9rem; line-height:1.7; color:#2a2a2a; margin-bottom:10px; }
+pre, code { background:#1a1a2e; color:#80c0ff; font-size:.84rem; padding:12px 16px; border-radius:6px; display:block; margin:10px 0; overflow-x:auto; font-family:'Courier New',monospace; line-height:1.6; }
+code { display:inline; padding:2px 8px; border-radius:3px; font-size:.85rem; }
+.step { background:#fafafa; border:1px solid #e0e0e0; border-radius:8px; padding:16px 20px; margin-bottom:12px; }
+.step-num { font-size:.72rem; font-weight:700; color:#e8003d; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.tip { background:#fffbe6; border:1px solid #ffd700; border-radius:6px; padding:12px 16px; margin:12px 0; font-size:.88rem; }
+.tip::before { content:"💡 "; }
+.arch { background:#f0f7ff; border:1px solid #b0ccee; border-radius:8px; padding:14px 18px; margin:14px 0; font-family:'Courier New',monospace; font-size:.88rem; line-height:2; }
+.ok { color:#007a45; font-weight:700; }
+.warn { color:#cc8800; font-weight:700; }
+.err { color:#e8003d; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<h1>Demo Completo — QuantumFinance IoT</h1>
+<div class="meta">Pipeline: Pico W → Mosquitto → Node-RED → InfluxDB → Grafana &nbsp;·&nbsp; MBA Robotics &amp; IOT · FIAP 2026</div>
+
+<div class="arch">
+[Pico W / Wokwi] ──MQTT──▶ [Mosquitto Broker] ──▶ [Node-RED] ──▶ [InfluxDB]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓ alerta local&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+&nbsp;LED/OLED&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Dashboard&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Grafana
+</div>
+
+<h2><span class="badge">Opção A</span> Demo rápida no Wokwi (para o vídeo)</h2>
+
+<p>Não precisa instalar nada. Mostra o pipeline conceitual com simulação visual.</p>
+
+<div class="step"><div class="step-num">Passo 1</div>
+  <p>Abra o Wokwi.com com os arquivos <code>main.py</code>, <code>ssd1306.py</code> e <code>diagram.json</code>. Clique em <strong>Play</strong>.</p>
+</div>
+<div class="step"><div class="step-num">Passo 2</div>
+  <p>Abra o <strong>dashboard_industrial.html</strong> em outra aba do browser.</p>
+</div>
+<div class="step"><div class="step-num">Passo 3</div>
+  <p>Coloque as duas janelas lado a lado e demonstre os cenários:<br>
+  • Botão <strong>PESSOA NA ZONA</strong> no Wokwi + botão <strong>⚠️ PESSOA DETECTADA</strong> no dashboard<br>
+  • Potenciômetro no Wokwi + botão <strong>🌡️ ALERTA TEMPERATURA</strong> no dashboard</p>
+</div>
+
+<div class="tip">Esta opção é suficiente para a entrega do vídeo. As opções B e C são para mostrar integração real (nota máxima).</div>
+
+<hr style="margin:24px 0;border:none;border-top:1px solid #eee;">
+
+<h2><span class="badge blue">Opção B</span> Node-RED com dados simulados (sem Pico W)</h2>
+
+<p>Instale o Node-RED e importe o flow. Os botões "inject" simulam o Pico W sem precisar de hardware.</p>
+
+<div class="step"><div class="step-num">1 — Instalar Node-RED (uma vez)</div>
+<pre>npm install -g --unsafe-perm node-red
+node-red</pre>
+<p>Acesse: <strong>http://localhost:1880</strong></p>
+</div>
+
+<div class="step"><div class="step-num">2 — Instalar plugins necessários</div>
+<p>No Node-RED, menu superior direito → <strong>Manage palette</strong> → aba <strong>Install</strong>:</p>
+<ul style="margin:8px 0 8px 20px;font-size:.88rem;">
+  <li><code>node-red-dashboard</code> — interface visual</li>
+  <li><code>node-red-contrib-influxdb</code> — integração InfluxDB (opcional)</li>
+</ul>
+</div>
+
+<div class="step"><div class="step-num">3 — Importar o flow</div>
+<p>Menu → <strong>Import</strong> → selecione o arquivo <code>node_red_flow.json</code> → <strong>Import</strong> → <strong>Deploy</strong></p>
+</div>
+
+<div class="step"><div class="step-num">4 — Testar sem hardware</div>
+<p>No flow importado, clique nos botões inject:<br>
+• <strong>"Teste: SEGURO"</strong> → sistema normal<br>
+• <strong>"Teste: AVISO pessoa"</strong> → pessoa detectada<br>
+• <strong>"Teste: ALERTA"</strong> → alerta completo (temp + pessoa)</p>
+<p>Acesse o dashboard em: <strong>http://localhost:1880/ui</strong></p>
+</div>
+
+<hr style="margin:24px 0;border:none;border-top:1px solid #eee;">
+
+<h2><span class="badge green">Opção C</span> Pipeline completo com Pico W físico</h2>
+
+<div class="step"><div class="step-num">1 — Instalar Mosquitto (MQTT Broker)</div>
+<p><strong>Mac:</strong> <code>brew install mosquitto &amp;&amp; brew services start mosquitto</code><br>
+<strong>Windows:</strong> Download em mosquitto.org → instalar como serviço</p>
+</div>
+
+<div class="step"><div class="step-num">2 — Configurar o firmware do Pico W</div>
+<p>Abra <code>main_hardware.py</code> e ajuste:</p>
+<pre>WIFI_SSID   = "nome_da_sua_rede"
+WIFI_PASS   = "sua_senha_wifi"
+MQTT_BROKER = "192.168.x.x"   # IP do seu Mac/PC (ifconfig ou ipconfig)</pre>
+<p>Copie <code>main_hardware.py</code> e <code>ssd1306.py</code> para o Pico W via Thonny ou mpremote:</p>
+<pre>mpremote cp main_hardware.py :main.py
+mpremote cp ssd1306.py :ssd1306.py</pre>
+</div>
+
+<div class="step"><div class="step-num">3 — Conectar Node-RED ao Mosquitto</div>
+<p>No flow importado, clique duas vezes no nó <strong>"MQTT — Forno A"</strong>:<br>
+• Server: <code>localhost</code> · Port: <code>1883</code><br>
+• Clique em <strong>Update</strong> → <strong>Deploy</strong></p>
+</div>
+
+<div class="step"><div class="step-num">4 — Verificar pipeline</div>
+<p>Ligue o Pico W → ele conecta ao Wi-Fi → publica no Mosquitto → Node-RED recebe → dashboard atualiza.</p>
+<p>Verifique no terminal do Mosquitto:</p>
+<pre>mosquitto_sub -h localhost -t "quantumfinance/#" -v</pre>
+</div>
+
+<div class="step"><div class="step-num">5 — (Opcional) InfluxDB + Grafana</div>
+<p><strong>Mac:</strong></p>
+<pre>brew install influxdb grafana
+brew services start influxdb
+brew services start grafana</pre>
+<p>InfluxDB: <strong>http://localhost:8086</strong> — crie o bucket <code>quantumfinance</code><br>
+Grafana: <strong>http://localhost:3000</strong> — adicione InfluxDB como datasource → crie dashboard</p>
+</div>
+
+<hr style="margin:24px 0;border:none;border-top:1px solid #eee;">
+
+<h2><span class="badge yellow">Para o vídeo</span> Roteiro de demonstração</h2>
+
+<table style="width:100%;border-collapse:collapse;font-size:.88rem;">
+  <tr style="background:#f5f5f0;"><th style="padding:8px;text-align:left;">Momento</th><th style="padding:8px;text-align:left;">O que mostrar</th><th style="padding:8px;text-align:left;">O que falar</th></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #eee;">0:00–2:00</td><td style="padding:8px;border-bottom:1px solid #eee;">Slides 1–3</td><td style="padding:8px;border-bottom:1px solid #eee;">Problema, motivação, objetivo</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #eee;">2:00–3:15</td><td style="padding:8px;border-bottom:1px solid #eee;">Slide 4 — Arquitetura</td><td style="padding:8px;border-bottom:1px solid #eee;">Explicar Pico W → MQTT → Node-RED → InfluxDB → Grafana</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #eee;">3:15–4:30</td><td style="padding:8px;border-bottom:1px solid #eee;">Slide 5 + Demo ao vivo</td><td style="padding:8px;border-bottom:1px solid #eee;">Mostrar Wokwi + Node-RED/dashboard funcionando</td></tr>
+  <tr><td style="padding:8px;border-bottom:1px solid #eee;">4:30–6:15</td><td style="padding:8px;border-bottom:1px solid #eee;">Slides 6–7</td><td style="padding:8px;border-bottom:1px solid #eee;">Responder as duas questões</td></tr>
+  <tr><td style="padding:8px;">6:15–7:00</td><td style="padding:8px;">Slides 8–9</td><td style="padding:8px;">Considerações, potencial, conclusão</td></tr>
+</table>
+
+<div style="margin-top:30px;padding:14px;background:#f0f0f0;border-radius:6px;font-size:.82rem;color:#555;text-align:center;">
+  Gabriela Feriani Leoni · MBA Robotics &amp; IOT · FIAP 2026
+</div>
+
+</div>
+</body>
+</html>
